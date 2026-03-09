@@ -5,45 +5,52 @@ import { fetchCars } from "@/utils";
 import { fuels, yearsOfProduction } from "@/constants";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { CarProps } from "@/types";
 
 export default function Home() {
-  const [allCars, setAllCars] = useState([]);
+  const [allCars, setAllCars] = useState<CarProps[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [manufacturer, setManufacturer] = useState("");
   const [model, setModel] = useState("");
-
   const [fuel, setFuel] = useState("");
   const [year, setYear] = useState(2023);
-
   const [limit, setLimit] = useState(10);
 
   const getCars = async () => {
-    setLoading(true)
+    setLoading(true);
+    setError("");
 
     try {
       const result = await fetchCars({
-        manufacturer: manufacturer || "",
+        manufacturer: manufacturer || "BMW", // default to BMW so page loads with data
         year: year || 2023,
         fuel: fuel || "",
         limit: limit || 10,
         model: model || "",
       });
 
-      setAllCars(result);
-    } catch (error) {
-      console.log(error)
+      if (!Array.isArray(result) || result.length === 0) {
+        setError("No vehicles found. Try a different search.");
+        setAllCars([]);
+      } else {
+        setAllCars(result);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+      setAllCars([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log(fuel, year)
     getCars();
   }, [fuel, year, limit, manufacturer, model]);
 
-  const isDataEmpty = !Array.isArray(allCars) || allCars.length < 1 || !allCars;
+  const isDataEmpty = !Array.isArray(allCars) || allCars.length < 1;
 
   return (
     <main className="overflow-hidden">
@@ -52,7 +59,7 @@ export default function Home() {
       <div className="mt-12 padding-x padding-y max-width" id="discover">
         <div className="home__text-container">
           <h1 className="text-4xl font-extrabold">Car Catalogue</h1>
-          <p>Explore the cars you might like</p>
+          <p>Explore vehicles from the TecDoc catalog</p>
         </div>
 
         <div className="home__filters">
@@ -63,19 +70,23 @@ export default function Home() {
           </div>
         </div>
 
-        {allCars.length > 0 ? (
+        {loading ? (
+          <div className="mt-16 w-full flex-center">
+            <Image
+              src="/loading.svg"
+              width={50}
+              height={50}
+              alt="loader"
+              className="object-contain"
+            />
+          </div>
+        ) : !isDataEmpty ? (
           <section>
             <div className="home__cars-wrapper">
-              {allCars?.map((car) => (
-                <CarCard car={car} />
+              {allCars.map((car: CarProps, index: number) => (
+                <CarCard car={car} key={`${car.make}-${car.model}-${index}`} />
               ))}
             </div>
-
-            {loading && (
-              <div className="mt-16 w-full flex-center">
-                <Image src="/loading.svg" width={50} height={50} alt="loader" className="object-contain" />
-              </div>
-            )}
 
             <ShowMore
               pageNumber={limit / 10}
@@ -86,7 +97,7 @@ export default function Home() {
         ) : (
           <div className="home__error-container">
             <h2 className="text-black text-xl font-bold">Oops, no results</h2>
-            <p>{allCars?.message}</p>
+            <p className="text-gray-500">{error || "Try searching for BMW, AUDI, or TOYOTA"}</p>
           </div>
         )}
       </div>

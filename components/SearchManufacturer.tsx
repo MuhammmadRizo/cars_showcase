@@ -7,21 +7,15 @@ import { useState, Fragment } from "react";
 import { manufacturers } from "@/constants";
 import { SearchManufacturerProps } from "@/types";
 
-const SearchManufacturer = ({
-  selected,
-  setSelected,
-}: SearchManufacturerProps) => {
+const SearchManufacturer = ({ selected, setSelected }: SearchManufacturerProps) => {
   const [query, setQuery] = useState("");
 
   const filteredManufacturers =
     query === ""
       ? manufacturers
       : manufacturers.filter((item) =>
-          item
-            .toLowerCase()
-            .replace(/\s+/g, "")
-            .includes(query.toLowerCase().replace(/\s+/g, ""))
-        );
+        item.toLowerCase().replace(/\s+/g, "").includes(query.toLowerCase().replace(/\s+/g, ""))
+      );
 
   return (
     <div className="search-manufacturer">
@@ -39,7 +33,7 @@ const SearchManufacturer = ({
 
           <Combobox.Input
             className="search-manufacturer__input"
-            placeholder="Volkswagen"
+            placeholder="BMW, AUDI, TOYOTA..."
             displayValue={(manufacturer: string) => manufacturer}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -51,37 +45,29 @@ const SearchManufacturer = ({
             leaveTo="opacity-0"
             afterLeave={() => setQuery("")}
           >
-            <Combobox.Options>
-              {filteredManufacturers.map((item) => (
-                <Combobox.Option
-                  key={item}
-                  value={item}
-                  className={({ active }) => `
-                    relative search-manufacturer__option${
-                      active ? "text-white bg-primary-blue" : "text-gray-900"
+            <Combobox.Options className="search-manufacturer__options">
+              {filteredManufacturers.length === 0 && query !== "" ? (
+                <div className="relative cursor-default select-none py-2 px-4 text-gray-700">
+                  No manufacturer found.
+                </div>
+              ) : (
+                filteredManufacturers.map((item) => (
+                  <Combobox.Option
+                    key={item}
+                    value={item}
+                    className={({ active }) =>
+                      `relative search-manufacturer__option ${active ? "text-white bg-primary-blue" : "text-gray-900"
+                      }`
                     }
-                    `}
-                >
-                  {({ selected, active }) => (
-                    <>
-                      <span
-                        className={`block truncate ${
-                          selected ? "font-medium" : "font-normal"
-                        }`}
-                      >
+                  >
+                    {({ selected, active }) => (
+                      <span className={`block truncate ${selected ? "font-medium" : "font-normal"}`}>
                         {item}
                       </span>
-                      {selected ? (
-                        <span
-                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                            active ? "text-white" : "text-teal-600"
-                          }`}
-                        ></span>
-                      ) : null}
-                    </>
-                  )}
-                </Combobox.Option>
-              ))}
+                    )}
+                  </Combobox.Option>
+                ))
+              )}
             </Combobox.Options>
           </Transition>
         </div>
